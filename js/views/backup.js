@@ -37,6 +37,10 @@ export async function render(main) {
       <div class="field"><label>Me lembrar de fazer backup a cada</label>
         <select id="bdays">${[3, 7, 15, 30].map(n => `<option value="${n}" ${S.settings.backupDays == n ? 'selected' : ''}>${n} dias</option>`).join('')}</select></div>
       ${persisted === false ? `<button class="btn small ghost" data-act="persist">Pedir para proteger o armazenamento</button>` : ''}
+
+      <h3 class="sec">Começar do zero</h3>
+      <p class="small">Apaga todas as peças, fotos, looks e pessoas <b>deste aparelho</b>. Faça um backup antes, se quiser guardar alguma coisa.</p>
+      <button class="btn block danger" data-act="wipe">${icon('trash')} Apagar tudo deste aparelho</button>
     </div>`;
   main.oninput = null;
   main.onchange = async e => { if (e.target.id === 'bdays') { S.settings.backupDays = +e.target.value; await saveSettings(); toast('Lembrete atualizado.'); } };
@@ -46,6 +50,12 @@ export async function render(main) {
     if (act === 'export') exportBackup();
     else if (act === 'csv') exportCSV();
     else if (act === 'import') importBackup(null);
+    else if (act === 'wipe') {
+      if (!confirm('Apagar TUDO deste aparelho? Peças, fotos, looks, pessoas e configurações.')) return;
+      if (prompt('Para confirmar, digite APAGAR') !== 'APAGAR') return toast('Nada foi apagado.');
+      await db.clearAll(); clearPhotoCache(); await load();
+      toast('Tudo apagado. O app está zerado.'); nav.go('#/armario', true);
+    }
     else if (act === 'persist') { const ok = await navigator.storage?.persist?.(); toast(ok ? 'Armazenamento protegido!' : 'O navegador não liberou. Instale o app na Tela de Início.'); nav.refresh(); }
   };
 }

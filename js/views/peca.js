@@ -4,7 +4,7 @@ import { NAMED, FAMILIES, nearestName, namedHex, cartelaOfColors, familyOfColors
 import { processImage, colorsFromBlob } from '../images.js';
 import { parseFicha } from '../ficha.js';
 import { header, icon, chips, swatch, itemCard, collage, hydrate, openSheet, closeSheet, choose, nav, profilesOptions, cartelaSelect, textSheet } from '../ui.js';
-import { $, esc, uid, brl, parseMoney, todayStr, addDays, fmtDate, toast, pickFiles } from '../util.js';
+import { $, esc, uid, brl, parseMoney, todayStr, addDays, fmtDate, toast, pickFiles, copyToClipboard } from '../util.js';
 import { scheduleSheet } from './planejar.js';
 import { itemText } from '../describe.js';
 
@@ -414,6 +414,6 @@ async function setStatus(it, s) {
 const row = (k, v) => v ? `<dt>${k}</dt><dd>${esc(v)}</dd>` : '';
 
 export async function copyText(txt, ok = 'Copiado!') {
-  try { await navigator.clipboard.writeText(txt); toast(ok); }
-  catch { textSheet('Copiar', txt, 'ficha.txt'); }
+  if (await copyToClipboard(txt)) toast(ok);
+  else textSheet('Copiar', txt, 'ficha.txt');
 }

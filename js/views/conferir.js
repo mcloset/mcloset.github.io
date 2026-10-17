@@ -56,6 +56,7 @@ export function render(main, params) {
         <button class="link small" data-act="prev" ${idx === 0 ? 'disabled' : ''}>← Anterior</button>
         <button class="link small" data-act="next">Pular →</button>
       </div>
+      <button class="link small danger-link" data-act="del-all">Excluir as ${list.length} importadas sem conferir</button>
       <h3 class="sec">Todas esperando (${list.length})</h3>
       <div class="conf-strip">${list.map((x, i) => `<button class="${i === idx ? 'on' : ''}" data-act="go" data-i="${i}">${x.photos?.[0] ? `<img data-ph="${x.photos[0]}" alt="">` : icon('hanger')}<small>${esc(x.code || '')}</small></button>`).join('')}</div>
     </div>`;
@@ -70,6 +71,11 @@ export function render(main, params) {
     else if (act === 'go') { idx = +a.dataset.i; nav.refresh(); scrollTo(0, 0); }
     else if (act === 'edit') nav.go('#/editar-peca/' + it.id);
     else if (act === 'del') { if (confirm(`Excluir “${it.name}”? As fotos também serão apagadas.`)) { await deleteItem(it.id); toast('Excluída.'); nav.refresh(); } }
+    else if (act === 'del-all') {
+      if (!confirm(`Excluir as ${list.length} peças importadas que ainda não foram conferidas (e as fotos delas)?`)) return;
+      for (const x of list) await deleteItem(x.id);
+      toast('Importação desfeita.'); nav.refresh();
+    }
     else if (act === 'all') {
       if (!confirm(`Confirmar as ${list.length} peças de uma vez? Você pode editar qualquer uma depois.`)) return;
       for (const x of list) { x.pendente = false; await save('items', x); }

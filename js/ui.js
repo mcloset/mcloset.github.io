@@ -1,5 +1,5 @@
 // Peças de interface reaproveitadas por todas as telas.
-import { $, esc, toast, deliverFile } from './util.js';
+import { $, esc, toast, deliverFile, copyToClipboard } from './util.js';
 import { S, curProfile, profile, photoURL, itemBand } from './store.js';
 import { catName, band, CAT_ORDER, CARTELAS, SEASONS } from './catalog.js';
 
@@ -131,7 +131,8 @@ export function hydrate(root = document) {
   });
 }
 async function loadImg(img) {
-  const u = await photoURL(img.dataset.ph, img.dataset.size || 'thumb');
+  img.onerror = () => img.classList.add('missing');
+  const u = await photoURL(img.dataset.ph, img.dataset.size || 'thumb').catch(() => '');
   if (u) img.src = u; else img.classList.add('missing');
 }
 
@@ -196,8 +197,8 @@ export function textSheet(title, text, filename = 'texto.txt') {
     title, cls: 'tall',
     onAct: async act => {
       if (act === 'copy') {
-        try { await navigator.clipboard.writeText(text); toast('Copiado!'); }
-        catch { const t = $('#bigtext'); t.focus(); t.select(); toast('Texto selecionado — toque em Copiar.'); }
+        if (await copyToClipboard(text)) toast('Copiado!');
+        else { const t = $('#bigtext'); t.removeAttribute('readonly'); t.focus(); t.select(); toast('Texto selecionado — toque em Copiar.'); }
       } else if (act === 'save') deliverFile(new Blob([text], { type: 'text/plain;charset=utf-8' }), filename);
     },
   });

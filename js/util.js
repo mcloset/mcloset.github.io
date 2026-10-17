@@ -75,3 +75,23 @@ export async function deliverFile(blob, filename) {
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
   return 'downloaded';
 }
+
+// Copia texto. No iPhone o método moderno às vezes é bloqueado, então tenta o método antigo
+// (textarea + "copiar") na mesma hora do toque. Devolve true se conseguiu.
+export function copyToClipboard(text) {
+  const legacy = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;font-size:16px';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select(); ta.setSelectionRange(0, text.length);
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch { }
+    ta.remove();
+    return ok;
+  };
+  if (legacy()) return Promise.resolve(true);
+  if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(text).then(() => true, () => false);
+  return Promise.resolve(false);
+}

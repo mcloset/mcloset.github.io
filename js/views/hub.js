@@ -2,8 +2,8 @@ import { S, curProfile, profile, save, remove, saveSettings, profileItems, itemU
 import { CATEGORIES, catName, STATUS, statusName, CARTELAS, SEASONS, cartelaName, seasonOf, AVATAR_COLORS, BANDS, GONE, CLIMAS, ESTAMPAS, OCASIOES, ESTILOS, DETAIL_FIELDS } from '../catalog.js';
 import { FAMILIES, NAMED, hexLab, deltaE, scoreAgainst, cartelaOfColors, familyOfColors } from '../color.js';
 import { processImage } from '../images.js';
-import { header, icon, chips, itemCard, itemRow, hydrate, openSheet, closeSheet, nav, avatar, emptyState, swatch, cartelaSelect } from '../ui.js';
-import { $, esc, uid, brl, parseMoney, todayStr, fmtDate, toast, pickFiles, daysBetween } from '../util.js';
+import { header, icon, chips, itemCard, itemRow, hydrate, openSheet, closeSheet, nav, avatar, emptyState, swatch, cartelaSelect, textSheet } from '../ui.js';
+import { $, esc, uid, brl, parseMoney, todayStr, fmtDate, toast, pickFiles, daysBetween, copyToClipboard } from '../util.js';
 import { pending } from './peca.js';
 import { exportSheet } from './armario.js';
 import { CONFIG } from '../config.js';
@@ -280,7 +280,8 @@ export function buildPrompt() {
   const detalhes = DETAIL_FIELDS.map(d => `${d.name}: (${d.hint})`).join('\n');
   return `Você é editor(a) de fotos de moda para catálogo de e-commerce, especialista em descrição técnica de roupas (como uma ficha de modelista) e consultor(a) de coloração pessoal.
 
-CÓDIGO DESTA PEÇA: [ESCREVA AQUI UM CÓDIGO, ex.: CAMISA-1A]
+CÓDIGO DESTA PEÇA: [ESCREVA AQUI UM CÓDIGO, ex.: CAMISA-01]
+(Se eu não informar o código, crie um no formato TIPO-NÚMERO, em maiúsculas e sem acento, ex.: CAMISA-01, CALCA-02, VESTIDO-03.)
 Se aparecer mais de uma peça na foto, trabalhe somente nesta: [ESCREVA AQUI QUAL PEÇA, ex.: "a saia floral"]
 
 Vou enviar UMA OU MAIS FOTOS que eu já tenho (podem ser antigas, com fundo bagunçado, com a peça pendurada, dobrada ou vestida em alguém). Todas são da MESMA peça. Antes de tudo, observe todas as fotos com atenção: cada costura, botão, recorte, textura e cor.
@@ -298,7 +299,7 @@ Regras de TODAS as imagens:
 - Quadrada 1:1, 1080 × 1080 px (mínimo 800 × 800), JPG ou PNG.
 - Peça centralizada ocupando cerca de 80% da altura, com margem branca em volta.
 - Luz de estúdio suave e uniforme; cores fiéis à peça real (não saturar, não clarear, não mudar o tom).
-- Uma imagem por arquivo, com o nome CÓDIGO_VISTA, por exemplo: CAMISA-1A_FRENTE, CAMISA-1A_COSTAS, CAMISA-1A_DETALHE, CAMISA-1A_VESTIDA.
+- Uma imagem por arquivo, com o nome CÓDIGO_VISTA, por exemplo: CAMISA-01_FRENTE.png, CAMISA-01_COSTAS.png, CAMISA-01_DETALHE.png, CAMISA-01_VESTIDA.png.
 
 PARTE 2 — FICHA COMPLETA EM TEXTO
 Depois das imagens, escreva a ficha em TEXTO (nunca dentro da imagem), dentro de UM bloco de código, com o título "FICHA [CÓDIGO]" e exatamente estes campos, nesta ordem.
@@ -341,7 +342,14 @@ ESTAMPAS: ${ESTAMPAS.join(', ')}
 OCASIÕES: ${OCASIOES.join(', ')}
 ESTILOS: ${ESTILOS.join(', ')}
 
-Se eu mandar fotos de outra peça depois, repita as PARTES 1 e 2 para ela com o novo código, sempre uma ficha por peça.`;
+PARTE 3 — ENTREGA
+- Mostre a ficha na conversa, dentro do bloco de código, para eu poder copiar e colar.
+- Se você conseguir gerar arquivos para download, entregue também UM arquivo .zip com UMA PASTA POR PEÇA, com o nome do código. Dentro de cada pasta, só os arquivos daquela peça: as imagens (CÓDIGO_FRENTE.png, CÓDIGO_DETALHE.png…) e UM ÚNICO arquivo de texto CÓDIGO.txt com a ficha. Não repita a ficha em vários arquivos.
+  Exemplo:
+  roupas.zip
+    CAMISA-01/  CAMISA-01_FRENTE.png · CAMISA-01_DETALHE.png · CAMISA-01.txt
+    CALCA-02/   CALCA-02_FRENTE.png · CALCA-02_DETALHE.png · CALCA-02.txt
+- Se eu mandar fotos de outra peça depois, repita as PARTES 1, 2 e 3 para ela com o novo código: sempre uma pasta e uma ficha por peça.`;
 }
 
 export function renderGuia(main) {
@@ -353,8 +361,9 @@ export function renderGuia(main) {
       <ol>
         <li>Copie o prompt abaixo e cole na IA junto com as fotos que você já tem de <b>uma peça</b>.</li>
         <li>Troque <b>[ESCREVA AQUI UM CÓDIGO]</b> por um código seu (ex.: <code>CAMISA-1A</code>). Se a foto tiver várias peças, troque também <b>[ESCREVA AQUI QUAL PEÇA]</b>.</li>
-        <li>A IA devolve as imagens (<code>CAMISA-1A_FRENTE</code>, <code>CAMISA-1A_COSTAS</code>…) e a <b>FICHA CAMISA-1A</b> em texto, com todos os detalhes da peça.</li>
-        <li>No app: <b>+ → Nova peça</b>, escolha as imagens e cole a ficha em <b>Colar a ficha da IA</b>. Se a IA não conseguir dar nome aos arquivos, tudo bem: nesse caminho o nome não importa.</li>
+        <li>A IA devolve as imagens e a <b>FICHA</b> em texto, com todos os detalhes. Se ela gerar um <b>.zip</b>, ele vem com uma pasta por roupa.</li>
+        <li><b>Uma peça:</b> <b>+ → Nova peça</b>, escolha as imagens e cole a ficha em <b>Colar a ficha da IA</b>.</li>
+        <li><b>Várias peças:</b> <b>+ → Importar em lote</b>. No computador, escolha a pasta (cada pasta é uma roupa). No iPhone, escolha o <b>.zip</b>, ou cole todas as fichas em <b>Colar fichas da IA</b> e toque em <b>Fotos</b> em cada peça para escolher as imagens dela.</li>
         <li>Confira: todos os campos continuam editáveis. A ficha só serve para não deixar nada em branco.</li>
       </ol>
       <h3 class="sec">Prompt para a IA</h3>
@@ -369,15 +378,15 @@ export function renderGuia(main) {
       <h3 class="sec">Cores e cartelas padronizadas</h3>
       <p>O app usa uma lista fixa de ${NAMED.length} cores de moda e as 12 cartelas do método sazonal expandido. O prompt manda a IA escolher só dessas listas. Se mesmo assim ela escrever outro nome, o app troca pela cor da lista mais parecida, usando o código da cor.</p>
       <h3 class="sec">Importar tudo de uma vez (em lote)</h3>
-      <p>Salve numa pasta todas as imagens com o código no nome (<code>CAMISA-1A_FRENTE.jpg</code>, <code>CAMISA-1A_COSTAS.jpg</code>…) e as fichas em arquivos .txt. Pode ser um .txt por peça ou a conversa inteira com a IA num .txt só. Em <b>+ → Importar em lote</b>, escolha a pasta (no iPhone, selecione todos os arquivos). O app junta foto e ficha pelo código, importa tudo e depois você confere uma a uma ou confirma todas de uma vez.</p>
+      <p><b>Cada pasta é uma roupa:</b> tudo o que estiver dentro dela (fotos e fichas) vira uma peça só, mesmo que tenha dois textos ou várias fotos. Escolha a pasta que tem as pastas das roupas dentro (ou o .zip, no iPhone). Fotos soltas, fora de pasta, são juntadas pelo código no nome do arquivo. Depois você confere uma a uma ou confirma todas de uma vez.</p>
       <h3 class="sec">Atenção</h3>
       <p>A IA pode mudar um pouco a peça (cor, detalhes). Confira antes de salvar. A foto <b>Frente</b> precisa ser bem fiel, porque é dela que o app confere as cores.</p>
     </div>`;
   main.oninput = main.onchange = null;
   main.onclick = async e => {
     if (!e.target.closest('[data-act="copy"]')) return;
-    try { await navigator.clipboard.writeText(prompt); toast('Prompt copiado!'); }
-    catch { const r = document.createRange(); r.selectNodeContents($('#prompt')); getSelection().removeAllRanges(); getSelection().addRange(r); toast('Selecionei o texto — toque em Copiar.'); }
+    if (await copyToClipboard(prompt)) toast('Prompt copiado! Agora é só colar na IA.');
+    else textSheet('Copie o prompt', prompt, 'prompt-mcloset.txt');
   };
 }
 

@@ -129,6 +129,15 @@ async function start() {
   installHint();
   checkRemote();
   countOpen();
+  // fotos antigas (Blob) viram bytes, para não quebrar no iPhone
+  if (!S.settings.photosV2) {
+    import('./db.js').then(async db => {
+      const broken = await db.migratePhotos();
+      S.settings.photosV2 = true; await saveSettings();
+      if (broken) toast(`${broken} foto(s) antiga(s) não puderam ser recuperadas. Reimporte essas peças.`);
+      nav.refresh();
+    }).catch(() => { });
+  }
   // no computador de desenvolvimento (localhost) o modo offline fica desligado para não servir arquivos velhos
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
     navigator.serviceWorker.register('./sw.js').then(reg => {

@@ -31,6 +31,7 @@
 <div id="toast" class="toast"></div>
 <script type="module">
 import { CONFIG } from './js/config.js';
+import { copyToClipboard } from './js/util.js';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -159,7 +160,8 @@ document.addEventListener('click', async e => {
     draw(); toast('Recado adicionado — agora publique.');
   } else if (a.dataset.act === 'copy') {
     sync();
-    try { await navigator.clipboard.writeText(json()); toast('Copiado!'); } catch { $('#json').select(); toast('Selecionado — copie.'); }
+    const ok = await copyToClipboard(json());
+    if (ok) toast('Copiado!'); else { $('#json').select(); toast('Selecionado — copie.'); }
   } else if (a.dataset.act === 'dl') {
     sync();
     const url = URL.createObjectURL(new Blob([json()], { type: 'application/json' }));
