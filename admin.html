@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Painel do Meu Closet</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/app.css">
+  <style>
+    main { padding-bottom: 60px; }
+    .card { border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; margin: 0 0 14px; }
+    .card h3 { margin: 0 0 6px; font: italic 400 21px var(--serif); }
+    .links { display: grid; gap: 8px; }
+    .links a { display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+    .links a small { display: block; color: var(--muted); }
+    .switch { display: flex; align-items: center; gap: 12px; font-weight: 600; }
+    .switch input { width: 46px; height: 26px; accent-color: var(--ok); }
+    .av { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin: 8px 0; display: flex; gap: 10px; }
+    .av div { flex: 1; } .av small { color: var(--muted); }
+    .steps li { margin: 6px 0; }
+    textarea.json { height: 200px; font: 12px ui-monospace, Menlo, Consolas, monospace; }
+    .ok { color: var(--ok); } .bad { color: #b3261e; }
+  </style>
+</head>
+<body>
+<main>
+  <header class="top"><div class="top-title"><h1>Painel do Meu Closet</h1><div class="top-sub">só para a dona do app</div></div></header>
+  <div id="app"><p class="muted">Carregando…</p></div>
+</main>
+<div id="toast" class="toast"></div>
+<script type="module">
+import { CONFIG } from './js/config.js';
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const toast = m => { const t = $('#toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2400); };
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+
+// descobre usuário e repositório pelo endereço (ex.: maiolini.github.io/meu-closet)
+const gh = (() => {
+  const m = location.hostname.match(/^([^.]+)\.github\.io$/);
+  const user = m ? m[1] : (localStorage.getItem('gh-user') || '');
+  const repo = m ? (location.pathname.split('/').filter(Boolean)[0] || `${user}.github.io`) : (localStorage.getItem('gh-repo') || 'meu-closet');
+  return { user, repo };
+})();
+const repoUrl = () => gh.user ? `https://github.com/${gh.user}/${gh.repo}` : '';
+const appUrl = new URL('./', location.href).href;
+
+let data = { ativo: true, mensagemDesligado: '', versaoMinima: 0, mensagemAtualizacao: '', avisos: [] };
+let loaded = false;
+
+async function load() {
+  try {
+    const r = await fetch('avisos.json?t=' + Date.now(), { cache: 'no-store' });
+    if (r.ok) { data = { ...data, ...(await r.json()) }; loaded = true; }
+  } catch { }
+  draw();
+}
+
+function json() { return JSON.stringify(data, null, 2) + '\n'; }
+
+function draw() {
+  const stats = CONFIG.goatcounter ? `https://${CONFIG.goatcounter}.goatcounter.com` : '';
+  $('#app').innerHTML = `
+  <div class="card">
+    <h3>Atalhos</h3>
+    <div class="links">
+      <a href="${appUrl}" target="_blank" rel="noopener"><span>Abrir o app<small>${esc(appUrl)}</small></span>↗</a>
+      ${stats ? `<a href="${stats}" target="_blank" rel="noopener"><span>Estatísticas de uso<small>quantas pessoas abrem e instalam o app</small></span>↗</a>`
+        : `<div class="pill warn">Contador desligado: falta o código do GoatCounter em js/config.js.</div>`}
+      ${repoUrl() ? `<a href="${repoUrl()}" target="_blank" rel="noopener"><span>Arquivos do app no GitHub<small>onde você envia as atualizações</small></span>↗</a>
+      <a href="${repoUrl()}/settings/pages" target="_blank" rel="noopener"><span>Configurações do site<small>publicar ou tirar o site do ar</small></span>↗</a>` : ''}
+    </div>
+    ${!location.hostname.endsWith('github.io') ? `<div class="grid2" style="margin-top:12px">
+      <div class="field"><label>Usuário do GitHub</label><input id="ghu" value="${esc(gh.user)}" placeholder="seu-usuario"></div>
+      <div class="field"><label>Repositório</label><input id="ghr" value="${esc(gh.repo)}"></div></div>` : ''}
+    <p class="small muted">Versão deste app: <b>${CONFIG.appVersion}</b> · arquivo de avisos ${loaded ? '<span class="ok">carregado</span>' : '<span class="bad">não encontrado (vai criar um novo)</span>'}</p>
+  </div>
+
+  <div class="card">
+    <h3>Situação do app</h3>
+    <label class="switch"><input type="checkbox" id="ativo" ${data.ativo !== false ? 'checked' : ''}> ${data.ativo !== false ? '<span class="ok">App no ar</span>' : '<span class="bad">App FORA do ar</span>'}</label>
+    ${data.ativo === false ? `<div class="field" style="margin-top:12px"><label>Mensagem para quem abrir o app</label>
+      <textarea id="msgOff" rows="3" placeholder="Ex.: Estamos em manutenção, volta amanhã!">${esc(data.mensagemDesligado)}</textarea></div>
+      <p class="hint">Mesmo fora do ar, cada pessoa ainda consegue fazer backup dos próprios dados.</p>` : ''}
+  </div>
+
+  <div class="card">
+    <h3>Recados para os usuários</h3>
+    <p class="small muted">Aparecem uma vez para cada pessoa, quando ela abrir o app com internet.</p>
+    ${(data.avisos || []).map((a, i) => `<div class="av"><div><b>${esc(a.titulo || '(sem título)')}</b><br>${esc(a.texto)}<br><small>${a.desde ? 'de ' + a.desde + ' ' : ''}${a.ate ? 'até ' + a.ate : 'sem data para sair'}</small></div><button class="icon-btn" data-rm="${i}" aria-label="Remover">✕</button></div>`).join('') || '<p class="muted small">Nenhum recado no momento.</p>'}
+    <div class="field"><label>Título</label><input id="at" placeholder="Ex.: Novidade no app!"></div>
+    <div class="field"><label>Mensagem</label><textarea id="ax" rows="3" placeholder="Ex.: Agora dá para montar looks em grupo. Confira em Meus Looks → Sair juntos."></textarea></div>
+    <div class="grid2"><div class="field"><label>Mostrar a partir de</label><input type="date" id="ad" value="${today()}"></div><div class="field"><label>Mostrar até (opcional)</label><input type="date" id="aa"></div></div>
+    <div class="field"><label>Link (opcional)</label><input id="al" placeholder="https://…"></div>
+    <button class="btn block ghost" data-act="add">+ Adicionar recado</button>
+  </div>
+
+  <div class="card">
+    <h3>Pedir para atualizar</h3>
+    <p class="small muted">Se você publicou uma versão nova e quer que todo mundo atualize, coloque aqui o número da versão nova. Quem estiver com versão mais antiga vê o botão “Atualizar”.</p>
+    <div class="grid2"><div class="field"><label>Versão mínima</label><input type="number" id="vm" min="0" value="${Number(data.versaoMinima) || 0}"></div>
+      <div class="field"><label>Mensagem</label><input id="vmsg" value="${esc(data.mensagemAtualizacao)}" placeholder="Tem novidade no app!"></div></div>
+  </div>
+
+  <div class="card">
+    <h3>Publicar as mudanças</h3>
+    <ol class="steps small">
+      <li>Toque em <b>Copiar</b>.</li>
+      <li>Toque em <b>Abrir avisos.json no GitHub</b> (entre com a sua conta, se pedir).</li>
+      <li>Apague todo o texto que está lá, cole o novo e toque em <b>Commit changes</b>.</li>
+      <li>Em 1 ou 2 minutos, quem abrir o app já vê a mudança.</li>
+    </ol>
+    <textarea class="json" id="json" readonly>${esc(json())}</textarea>
+    <div class="row-btns wide">
+      <button class="btn" data-act="copy">Copiar</button>
+      ${repoUrl() ? `<a class="btn ghost" href="${repoUrl()}/edit/main/avisos.json" target="_blank" rel="noopener">Abrir avisos.json no GitHub</a>` : ''}
+    </div>
+    <button class="btn block ghost" data-act="dl">Baixar o arquivo avisos.json</button>
+  </div>
+
+  <div class="card prose small">
+    <h3>Como mexer em cada coisa</h3>
+    <p><b>Atualizar o app:</b> envie os arquivos novos no GitHub (Add file → Upload files). Na próxima vez que cada pessoa abrir o app com internet, ele se atualiza sozinho. Para não esperar, use “Pedir para atualizar”.</p>
+    <p><b>Tirar do ar por um tempo:</b> desligue “App no ar”, escreva a mensagem e publique. Quem abrir vê o aviso e só consegue fazer backup. Para voltar, ligue de novo e publique.</p>
+    <p><b>Tirar do ar de vez:</b> primeiro desligue aqui e publique, para todos verem o aviso. Depois, em Configurações do site, desative o GitHub Pages. Os apps já instalados continuam abertos no celular de cada pessoa, sem internet, com o aviso. Os dados de cada uma ficam no aparelho dela.</p>
+    <p><b>Segurança:</b> qualquer pessoa pode abrir esta página, mas só quem entra na <b>sua conta do GitHub</b> consegue publicar mudanças.</p>
+  </div>`;
+}
+
+function sync() {
+  const v = id => $(id)?.value;
+  if ($('#msgOff')) data.mensagemDesligado = v('#msgOff');
+  data.versaoMinima = Number(v('#vm')) || 0;
+  data.mensagemAtualizacao = v('#vmsg') || '';
+  if ($('#ghu')) { gh.user = v('#ghu').trim(); gh.repo = v('#ghr').trim() || 'meu-closet'; localStorage.setItem('gh-user', gh.user); localStorage.setItem('gh-repo', gh.repo); }
+  $('#json').value = json();
+}
+document.addEventListener('input', sync);
+document.addEventListener('change', e => {
+  if (e.target.id === 'ativo') { sync(); data.ativo = e.target.checked; if (!data.ativo && !data.mensagemDesligado) data.mensagemDesligado = 'O Meu Closet está em manutenção. Volta logo!'; draw(); }
+  if (e.target.id === 'ghu' || e.target.id === 'ghr') draw();
+});
+document.addEventListener('click', async e => {
+  const rm = e.target.closest('[data-rm]');
+  if (rm) { sync(); data.avisos.splice(+rm.dataset.rm, 1); return draw(); }
+  const a = e.target.closest('[data-act]'); if (!a) return;
+  if (a.dataset.act === 'add') {
+    sync();
+    const texto = $('#ax').value.trim();
+    if (!texto) return toast('Escreva a mensagem.');
+    const titulo = $('#at').value.trim();
+    const slug = (titulo || texto).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 30).replace(/^-+|-+$/g, '');
+    data.avisos = [...(data.avisos || []), { id: `${today()}-${slug}-${Math.random().toString(36).slice(2, 6)}`, titulo, texto, desde: $('#ad').value || '', ate: $('#aa').value || '', link: $('#al').value.trim() }]
+      .map(x => Object.fromEntries(Object.entries(x).filter(([, v]) => v !== '')));
+    draw(); toast('Recado adicionado — agora publique.');
+  } else if (a.dataset.act === 'copy') {
+    sync();
+    try { await navigator.clipboard.writeText(json()); toast('Copiado!'); } catch { $('#json').select(); toast('Selecionado — copie.'); }
+  } else if (a.dataset.act === 'dl') {
+    sync();
+    const url = URL.createObjectURL(new Blob([json()], { type: 'application/json' }));
+    const l = Object.assign(document.createElement('a'), { href: url, download: 'avisos.json' });
+    document.body.appendChild(l); l.click(); setTimeout(() => { URL.revokeObjectURL(url); l.remove(); }, 2000);
+  }
+});
+load();
+</script>
+</body>
+</html>

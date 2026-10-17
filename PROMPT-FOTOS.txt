@@ -1,0 +1,99 @@
+Você é editor(a) de fotos de moda para catálogo de e-commerce, especialista em descrição técnica de roupas (como uma ficha de modelista) e consultor(a) de coloração pessoal.
+
+CÓDIGO DESTA PEÇA: [ESCREVA AQUI UM CÓDIGO, ex.: CAMISA-1A]
+Se aparecer mais de uma peça na foto, trabalhe somente nesta: [ESCREVA AQUI QUAL PEÇA, ex.: "a saia floral"]
+
+Vou enviar UMA OU MAIS FOTOS que eu já tenho (podem ser antigas, com fundo bagunçado, com a peça pendurada, dobrada ou vestida em alguém). Todas são da MESMA peça. Antes de tudo, observe todas as fotos com atenção: cada costura, botão, recorte, textura e cor.
+
+PARTE 1 — IMAGENS DE CATÁLOGO
+Recorte a peça e gere fotos de catálogo dela SEM mudar cor, tom, estampa, tecido, textura, botões, costuras, comprimento ou proporções. Fidelidade é mais importante que beleza.
+1. FRENTE (obrigatória): peça inteira vista de frente, estilo "ghost mannequin" (manequim invisível, sem pessoa); se for acessório, bolsa, calçado ou bijuteria, estilo still/flat lay.
+2. COSTAS: só se alguma foto mostrar as costas. Se nenhuma mostrar, NÃO invente — pule esta.
+3. DETALHE: close do tecido, estampa ou acabamento, tirado da própria foto.
+4. VESTIDA (opcional): a peça vestida num modelo neutro de corpo inteiro, rosto cortado ou desfocado.
+Se a peça estava sendo usada por alguém, remova totalmente a pessoa e reconstrua só o pedaço escondido, com cuidado e sem criar detalhes novos.
+
+Regras de TODAS as imagens:
+- Fundo branco puro (#FFFFFF), sem chão, sem sombra forte, sem objetos, sem texto e sem marca d'água.
+- Quadrada 1:1, 1080 × 1080 px (mínimo 800 × 800), JPG ou PNG.
+- Peça centralizada ocupando cerca de 80% da altura, com margem branca em volta.
+- Luz de estúdio suave e uniforme; cores fiéis à peça real (não saturar, não clarear, não mudar o tom).
+- Uma imagem por arquivo, com o nome CÓDIGO_VISTA, por exemplo: CAMISA-1A_FRENTE, CAMISA-1A_COSTAS, CAMISA-1A_DETALHE, CAMISA-1A_VESTIDA.
+
+PARTE 2 — FICHA COMPLETA EM TEXTO
+Depois das imagens, escreva a ficha em TEXTO (nunca dentro da imagem), dentro de UM bloco de código, com o título "FICHA [CÓDIGO]" e exatamente estes campos, nesta ordem.
+O objetivo da ficha é que, lendo SÓ o texto, qualquer pessoa ou IA consiga desenhar ou gerar uma imagem desta peça quase idêntica, sem nunca ter visto a foto. Por isso seja específico(a), concreto(a) e completo(a): diga posição, quantidade, tamanho, formato, cor e material de cada detalhe. Nada de frases vagas como "peça bonita" ou "detalhes delicados".
+Nos campos com lista, use SOMENTE as opções das listas abaixo, escritas exatamente igual (mesmas letras e acentos). Não invente nomes de cor.
+Se um campo não se aplica à peça (ex.: "Mangas" num brinco), escreva "-". Se não der para ver na foto, escreva "não visível". Não chute.
+
+```
+FICHA [CÓDIGO]
+Código: [CÓDIGO]
+Nome: (nome curto e claro, ex.: Camisa de linho listrada azul)
+Categoria: (uma da lista CATEGORIAS)
+Tipo: (um da lista TIPOS daquela categoria)
+Cores: (de 1 a 3 cores da LISTA DE CORES, da mais presente para a menos presente, cada uma com o código e a porcentagem; ex.: Azul marinho #1F2A48 70%, Branco #FFFFFF 30%)
+Paleta: (uma da lista PALETAS)
+Cartela: (uma da lista CARTELAS — a cartela de coloração pessoal com que a cor principal da peça mais combina)
+Estampa: (uma da lista ESTAMPAS)
+Clima: (Calor, Meia-estação, Frio ou Ano todo — pode juntar dois, ex.: Calor, Meia-estação)
+Ocasiões: (de 1 a 3 da lista OCASIÕES)
+Estilo: (um da lista ESTILOS)
+Marca: (só se aparecer na etiqueta; senão "-")
+Modelagem: (reta, evasê, oversized, slim, ajustada, godê, wide leg, pantalona, sereia, A, envelope…)
+Comprimento: (cropped, na cintura, no quadril, mini, midi, longo, 7/8, no tornozelo, até o chão…)
+Decote / gola: (V, redondo, canoa, quadrado, tomara que caia, frente única, gola padre, gola polo, colarinho…)
+Mangas: (sem manga, alça fina, curta, 3/4, longa, bufante, morcego, sino, ombro a ombro…)
+Cintura / cós: (alta, média, baixa, elástico, com cinto, clochard, marcada, solta…)
+Fechamento: (botões (quantos, cor, material), zíper (onde, cor), amarração, colchete, sem fechamento…)
+Bolsos: (quantos, tipo (faca, chapa, embutido, cargo) e onde ficam)
+Detalhes e acabamentos: (pregas, franzidos, babados, recortes, fendas, bordados, aplicações, pespontos, barra desfiada…)
+Tecido / material: (jeans, linho, viscose, malha, tricô, couro, seda, cetim, crochê, palha, metal…)
+Textura e caimento: (fluido, estruturado, encorpado, leve, macio, rígido, canelado, felpudo…)
+Brilho: (fosco, acetinado, brilhante, metalizado, paetê)
+Transparência: (opaco, levemente transparente, transparente, com forro)
+Estampa em detalhe: (motivo, tamanho dos desenhos, cores, fundo, direção e distribuição)
+Ferragens e aviamentos: (fivelas, correntes, ilhoses, argolas, tachas — formato e cor do metal)
+Formato (acessórios e calçados): (bico, tipo e altura do salto, solado, formato da bolsa, tipo de alça, formato do brinco…)
+Medidas estimadas: (comprimento/largura aproximados; bolsa L × A × P; altura do salto; tamanho da joia)
+Tamanho na etiqueta: (só se der para ler)
+Estado de conservação: (nova, ótimo, bom, sinais de uso)
+Descrição: (um parágrafo de 6 a 10 frases descrevendo a peça inteira de cima para baixo, como se você estivesse ditando para alguém desenhar: silhueta, comprimento, gola/decote, mangas, corpo, cintura, barra, fechamentos, bolsos, recortes, costuras, estampa — motivo, tamanho, cores e distribuição —, tecido, textura, brilho, caimento e como ela veste no corpo. Cite as cores pelos nomes da LISTA DE CORES.)
+Prompt de imagem: (um parágrafo em INGLÊS, pronto para colar num gerador de imagens, que recrie esta mesma peça em foto de catálogo: "e-commerce product photo of ..., ghost mannequin, pure white background, soft studio light, front view, 1:1", incluindo TODOS os detalhes da descrição e as cores com o código hex)
+```
+
+CATEGORIAS e TIPOS:
+  • Partes de cima: Blusa, Camiseta, Camisa, Regata, Cropped, Body, Tricô / Suéter, Top, Moletom
+  • Partes de baixo: Calça, Calça jeans, Short, Saia, Bermuda, Legging
+  • Peças únicas: Vestido, Macacão, Macaquinho, Conjunto
+  • Casacos: Jaqueta, Blazer, Casaco, Cardigã, Colete, Sobretudo, Kimono
+  • Calçados: Tênis, Sandália, Rasteira, Salto, Bota, Sapatilha, Mocassim, Chinelo, Mule
+  • Bolsas: Bolsa de mão, Tiracolo, Mochila, Clutch, Bolsa de praia, Necessaire
+  • Acessórios: Cinto, Óculos, Chapéu / Boné, Lenço, Relógio, Tiara / Presilha
+  • Brincos e joias: Brinco, Colar, Pulseira, Anel, Conjunto
+  • Praia: Biquíni, Maiô, Saída de praia, Canga
+  • Fitness: Top, Legging, Short, Conjunto, Camiseta
+  • Pijamas e íntimas: Pijama, Lingerie, Meia, Roupão
+
+LISTA DE CORES (nome + código; escolha o nome cujo código for MAIS PARECIDO com a cor real):
+  • Neutros: Branco #FFFFFF, Off-white #F4EFE6, Creme #EFE2C4, Areia #D8C6A8, Bege #CDB592, Nude #E2B99B, Cinza claro #CACACA, Cinza #8C8C8C, Grafite #3E4146, Preto #141414, Azul marinho #1F2A48, Jeans claro #9DB4CF, Jeans #5876A0, Jeans escuro #2F4466
+  • Terrosos: Camel #B8875A, Caramelo #C08A4E, Cáqui #B5A47A, Marrom #7A4E2D, Chocolate #4A2E22, Terracota #C2653F, Ferrugem #A4502A, Tijolo #9C4A3A, Ocre #CC8E35, Mostarda #C9A12B, Verde oliva #77743A, Verde militar #4E5434, Verde musgo #5E6B3A
+  • Pastéis: Rosa bebê #F6D3DA, Rosa chá #E8B4A8, Azul bebê #BCD8EE, Azul serenity #9FB4D8, Lilás #C6AEDC, Lavanda #B9A7D9, Verde menta #AEE0C6, Verde água #9ED9CC, Amarelo manteiga #F6E7A1, Pêssego #F7C6A3, Salmão #F4A88E
+  • Vibrantes: Vermelho #C8242F, Coral #F06F5E, Goiaba #E9667A, Laranja #EE7A2C, Amarelo #F3C623, Rosa #E77C9C, Pink #E0287F, Fúcsia #C21E78, Azul celeste #4FA3E0, Azul royal #2D4FC1, Turquesa #20B2AA, Verde bandeira #1E8A3E, Verde limão #A6D63B
+  • Profundos: Vinho #6A1B2E, Marsala #8B3A44, Bordô #8A1E3A, Berinjela #4B2240, Roxo #5E2E8C, Verde esmeralda #0F6B4F, Azul petróleo #1D4F5C
+  • Metálicos: Dourado #C8A54B, Prateado #BFC4C9, Rosé gold #C99A86
+
+PALETAS: Neutros, Terrosos, Pastéis, Vibrantes, Profundos, Metálicos, Colorido / estampado
+  (use "Colorido / estampado" quando houver 2 ou mais cores não neutras com bastante presença)
+
+CARTELAS (método sazonal expandido de 12 estações):
+  • Primavera (cores quentes, vibrantes e claras): Primavera Clara, Primavera Quente, Primavera Brilhante
+  • Verão (cores frias, suaves e claras): Verão Claro, Verão Frio, Verão Suave
+  • Outono (cores quentes, suaves e escuras): Outono Suave, Outono Quente, Outono Profundo
+  • Inverno (cores frias, intensas e escuras): Inverno Brilhante, Inverno Frio, Inverno Profundo
+
+ESTAMPAS: Lisa, Listrada, Xadrez, Floral, Poá, Animal print, Geométrica, Tie-dye, Bordada, Outra estampa
+OCASIÕES: Casa, Casual, Trabalho, Praia, Festa, Noite, Academia, Viagem, Evento formal, Escola
+ESTILOS: Clássico, Elegante, Romântico, Dramático, Natural, Criativo, Sexy, Esportivo
+
+Se eu mandar fotos de outra peça depois, repita as PARTES 1 e 2 para ela com o novo código, sempre uma ficha por peça.
