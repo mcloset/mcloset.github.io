@@ -1,4 +1,4 @@
-// Compartilhar closet ou look com outra pessoa que também usa o Meu Closet.
+// Compartilhar closet ou look com outra pessoa que também usa o MCLOSET.
 // O arquivo .zip leva só as peças, looks e fotos escolhidos — nada do resto do seu app.
 import * as db from './db.js';
 import { S, save, profile, item, look, lookItems, deleteItem, deleteLook, clearPhotoCache, invalidate } from './store.js';
@@ -24,7 +24,7 @@ async function pack(scope, profs, items, looks, title) {
     if (p.thumb) entries.push({ name: `photos/${id}.thumb.jpg`, data: p.thumb });
   }
   const zip = await makeZip(entries);
-  return deliverFile(zip, `meu-closet-${slug(title)}-${todayStr()}.zip`);
+  return deliverFile(zip, `mcloset-${slug(title)}-${todayStr()}.zip`);
 }
 
 // opts.withPrices: incluir preços (por padrão não vão)

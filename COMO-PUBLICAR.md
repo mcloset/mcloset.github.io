@@ -1,4 +1,4 @@
-# Como colocar o Meu Closet no ar (GitHub Pages) e instalar no iPhone
+# Como colocar o MCLOSET no ar (GitHub Pages) e instalar no iPhone
 
 O GitHub só guarda o **programa**. Suas fotos e dados ficam **somente no seu aparelho**.
 

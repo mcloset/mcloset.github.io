@@ -59,7 +59,7 @@ export function closetPrompt(items, { purpose = 'looks', usage = true, price = f
   }[purpose];
   const head = [
     title || 'MEU GUARDA-ROUPA',
-    `Gerado pelo app Meu Closet em ${fmtDate(new Date().toISOString().slice(0, 10))} — ${list.length} peça${list.length === 1 ? '' : 's'}.`,
+    `Gerado pelo app MCLOSET em ${fmtDate(new Date().toISOString().slice(0, 10))} — ${list.length} peça${list.length === 1 ? '' : 's'}.`,
     intro,
     people.length ? `Pessoas:\n${peopleTxt}` : '',
     'As cores seguem uma lista fixa de nomes de moda com o código hex, e as cartelas seguem o método sazonal expandido de 12 estações.',

@@ -62,7 +62,7 @@ export async function exportBackup() {
     for (const s of LIST_STORES) data[s] = S[s];
     const entries = [
       { name: 'data.json', data: JSON.stringify(data) },
-      { name: 'LEIA-ME.txt', data: 'Backup do app Meu Closet.\r\nPara restaurar: abra o app > Hub pessoal > Backup e dados > Importar backup, e escolha este arquivo .zip.\r\nA pasta photos tem todas as fotos em JPG. O arquivo pecas.csv abre no Excel.\r\n' },
+      { name: 'LEIA-ME.txt', data: 'Backup do app MCLOSET.\r\nPara restaurar: abra o app > Hub pessoal > Backup e dados > Importar backup, e escolha este arquivo .zip.\r\nA pasta photos tem todas as fotos em JPG. O arquivo pecas.csv abre no Excel.\r\n' },
       { name: 'pecas.csv', data: csv() },
     ];
     const keys = await db.getAllKeys('photos');
@@ -76,7 +76,7 @@ export async function exportBackup() {
     const zip = await makeZip(entries, (n, t) => { if (n % 25 === 0) set(`Montando arquivo ${n}/${t}…`); });
     set(`Pronto: ${(zip.size / 1048576).toFixed(1)} MB`);
     closeSheet();
-    const r = await deliverFile(zip, `meu-closet-backup-${todayStr()}.zip`);
+    const r = await deliverFile(zip, `mcloset-backup-${todayStr()}.zip`);
     if (r !== 'cancel') {
       S.settings.lastBackup = new Date().toISOString();
       await saveSettings();
@@ -104,7 +104,7 @@ function csv() {
 }
 
 async function exportCSV() {
-  await deliverFile(new Blob([csv()], { type: 'text/csv;charset=utf-8' }), `meu-closet-pecas-${todayStr()}.csv`);
+  await deliverFile(new Blob([csv()], { type: 'text/csv;charset=utf-8' }), `mcloset-pecas-${todayStr()}.csv`);
 }
 
 // Recebe um closet/look que outra pessoa compartilhou (arquivo com share.json)
@@ -138,7 +138,7 @@ export async function importBackup(picked) {
     zip = await readZip(file);
     if (zip.has('share.json')) return receiveShare(zip);
     data = JSON.parse(await zip.text('data.json'));
-    if (data.app !== 'meu-closet') throw new Error('Este arquivo não é um backup do Meu Closet.');
+    if (data.app !== 'meu-closet') throw new Error('Este arquivo não é um backup do MCLOSET.');
   } catch (err) { return alert('Não consegui ler o backup: ' + err.message); }
   const n = (data.items || []).length;
   const hasData = S.items.length > 0;
@@ -193,7 +193,7 @@ export function renderCompartilhar(main) {
   main.innerHTML = `
     ${header('Compartilhar closets', { back: '#/hub' })}
     <div class="pad">
-      <p class="small">Se uma amiga, sua mãe ou sua esposa também usa o Meu Closet, vocês podem trocar closets e looks. Cada closet recebido aparece como uma pessoa no seu app, e dá para combinar looks em grupo com ela em <b>Sair juntos</b>.</p>
+      <p class="small">Se uma amiga, sua mãe ou sua esposa também usa o MCLOSET, vocês podem trocar closets e looks. Cada closet recebido aparece como uma pessoa no seu app, e dá para combinar looks em grupo com ela em <b>Sair juntos</b>.</p>
 
       <h3 class="sec">Enviar</h3>
       <div class="menu">${own.map(p => `<button class="menu-item" data-act="send" data-id="${p.id}">${avatar(p)}<span>Enviar o closet de ${esc(p.name)}<small>${S.items.filter(i => i.profileId === p.id).length} peças + looks (sem preços)</small></span>${icon('share')}</button>`).join('')}</div>

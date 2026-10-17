@@ -121,7 +121,7 @@ export function renderDetail(main, params) {
     else if (act === 'share') {
       const how = await choose('Compartilhar look', [
         { name: 'Imagem do look', desc: 'foto montada para mandar no WhatsApp/Instagram', icon: 'image', value: 'img' },
-        { name: 'Arquivo do look', desc: 'para outra pessoa abrir no Meu Closet dela', icon: 'file', value: 'file' },
+        { name: 'Arquivo do look', desc: 'para outra pessoa abrir no MCLOSET dela', icon: 'file', value: 'file' },
       ]);
       if (how === 'img') shareLook(l);
       else if (how === 'file') { toast('Preparando o arquivo…'); shareLookFile(l.id); }
@@ -177,7 +177,7 @@ async function shareLook(l) {
     const r = Math.min((cell - 20) / bmp.width, (cell - 20) / bmp.height);
     ctx.drawImage(bmp, x + (cell - bmp.width * r) / 2, y + (cell - bmp.height * r) / 2, bmp.width * r, bmp.height * r);
   }
-  ctx.fillStyle = '#9a9a9a'; ctx.font = '28px Georgia, serif'; ctx.fillText('Meu Closet', pad, H - 40);
+  ctx.fillStyle = '#9a9a9a'; ctx.font = '28px Georgia, serif'; ctx.fillText('MCLOSET', pad, H - 40);
   const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.9));
   await deliverFile(blob, l.name.replace(/[^\w\- ]+/g, '').trim() + '.jpg');
 }

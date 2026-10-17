@@ -35,7 +35,7 @@ export function render(main) {
   const view = S.settings.view || 'grid';
   const extra = ADV.filter(k => F[k]).length + (F.status !== 'ativas' ? 1 : 0) + (F.sort !== 'recentes' ? 1 : 0);
   main.innerHTML = `
-    ${header('Meu Closet', { logo: true, right: `<a class="icon-btn" href="#/painel" aria-label="Painel">${icon('chart')}</a>`, sub: S.profiles.length > 1 ? 'Closet de ' + esc(p.name) + (p.sharedFrom ? ' (compartilhado)' : '') : '' })}
+    ${header('MCLOSET', { logo: true, right: `<a class="icon-btn" href="#/painel" aria-label="Painel">${icon('chart')}</a>`, sub: S.profiles.length > 1 ? 'Closet de ' + esc(p.name) + (p.sharedFrom ? ' (compartilhado)' : '') : '' })}
     ${backupBanner()}
     ${pendingBanner()}
     ${S.items.length ? todayCardHTML() : ''}

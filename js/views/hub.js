@@ -37,7 +37,7 @@ export function render(main) {
         ${mi('#/guia', 'camera', 'Como preparar as fotos', 'tamanho ideal e prompt para a IA')}
       </div>
       <button class="menu-item" data-act="about">${icon('info')}<span>Sobre e privacidade<small>versão ${CONFIG.appVersion}${CONFIG.goatcounter ? ' · estatística anônima ' + (S.settings.noStats ? 'desligada' : 'ligada') : ''}</small></span>${icon('chev')}</button>
-      <p class="foot">Meu Closet · seus dados ficam só neste aparelho. Faça backup com frequência.</p>
+      <p class="foot">MCLOSET · seus dados ficam só neste aparelho. Faça backup com frequência.</p>
     </div>`;
   hydrate(main);
   main.oninput = main.onchange = null;
@@ -383,7 +383,7 @@ export function renderGuia(main) {
 
 function aboutSheet() {
   const draw = () => `
-    <p><b>Meu Closet</b> — versão ${CONFIG.appVersion}</p>
+    <p><b>MCLOSET</b> — versão ${CONFIG.appVersion}</p>
     <p class="small">Suas fotos, peças, looks e calendário ficam <b>só neste aparelho</b>. Nada disso é enviado para a internet. Para levar para outro aparelho, use o backup.</p>
     ${CONFIG.goatcounter ? `<p class="small">Para saber quantas pessoas usam o app, ele envia um sinal <b>anônimo</b> quando é aberto (sem nome, sem e-mail, sem cookies e sem nada do seu closet).</p>
     <label class="ck"><input type="checkbox" id="stats" ${S.settings.noStats ? '' : 'checked'}><span>Permitir estatística anônima de uso</span></label>` : '<p class="small muted">Este app não envia nenhuma estatística.</p>'}

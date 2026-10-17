@@ -1,6 +1,6 @@
 // Guarda o app no aparelho para funcionar sem internet.
 // Ao publicar uma nova versão, aumente o número abaixo.
-const VERSION = 'meu-closet-v8';
+const VERSION = 'meu-closet-v9';
 const FILES = [
   './', './index.html', './manifest.webmanifest', './css/app.css',
   './js/app.js', './js/db.js', './js/store.js', './js/ui.js', './js/util.js', './js/catalog.js',

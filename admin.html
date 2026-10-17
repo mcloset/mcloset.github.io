@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Painel do Meu Closet</title>
+  <title>Painel do MCLOSET</title>
   <meta name="robots" content="noindex">
   <link rel="icon" type="image/png" href="icons/icon-192.png">
   <link rel="stylesheet" href="css/app.css">
@@ -25,7 +25,7 @@
 </head>
 <body>
 <main>
-  <header class="top"><div class="top-title"><h1>Painel do Meu Closet</h1><div class="top-sub">só para a dona do app</div></div></header>
+  <header class="top"><div class="top-title"><h1>Painel do MCLOSET</h1><div class="top-sub">só para a dona do app</div></div></header>
   <div id="app"><p class="muted">Carregando…</p></div>
 </main>
 <div id="toast" class="toast"></div>
@@ -41,7 +41,9 @@ const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(
 const gh = (() => {
   const m = location.hostname.match(/^([^.]+)\.github\.io$/);
   const user = m ? m[1] : (localStorage.getItem('gh-user') || '');
-  const repo = m ? (location.pathname.split('/').filter(Boolean)[0] || `${user}.github.io`) : (localStorage.getItem('gh-repo') || 'meu-closet');
+  // em usuario.github.io/meu-closet/ o repositório é "meu-closet"; em usuario.github.io/ (sem pasta) é "usuario.github.io"
+  const first = location.pathname.split('/').filter(Boolean)[0] || '';
+  const repo = m ? (first && !first.includes('.') ? first : `${user}.github.io`) : (localStorage.getItem('gh-repo') || 'meu-closet');
   return { user, repo };
 })();
 const repoUrl = () => gh.user ? `https://github.com/${gh.user}/${gh.repo}` : '';
@@ -139,7 +141,7 @@ function sync() {
 }
 document.addEventListener('input', sync);
 document.addEventListener('change', e => {
-  if (e.target.id === 'ativo') { sync(); data.ativo = e.target.checked; if (!data.ativo && !data.mensagemDesligado) data.mensagemDesligado = 'O Meu Closet está em manutenção. Volta logo!'; draw(); }
+  if (e.target.id === 'ativo') { sync(); data.ativo = e.target.checked; if (!data.ativo && !data.mensagemDesligado) data.mensagemDesligado = 'O MCLOSET está em manutenção. Volta logo!'; draw(); }
   if (e.target.id === 'ghu' || e.target.id === 'ghr') draw();
 });
 document.addEventListener('click', async e => {

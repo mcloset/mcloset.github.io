@@ -98,7 +98,7 @@ function showOff(msg) {
   el.innerHTML = `<div class="off-box">
       ${icon('info')}
       <h2 class="serif">App fora do ar</h2>
-      <p>${esc(msg || 'O Meu Closet está temporariamente indisponível.')}</p>
+      <p>${esc(msg || 'O MCLOSET está temporariamente indisponível.')}</p>
       <p class="small muted">Suas fotos e peças continuam guardadas neste aparelho. Faça uma cópia de segurança para não perder nada.</p>
       <button class="btn block" data-off="backup">${icon('download')} Fazer backup dos meus dados</button>
     </div>`;
