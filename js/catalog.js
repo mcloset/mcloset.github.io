@@ -13,6 +13,35 @@ export const CATEGORIES = [
   { id: 'fitness', name: 'Fitness', subs: ['Top', 'Legging', 'Short', 'Conjunto', 'Camiseta'] },
   { id: 'intimas', name: 'Pijamas e íntimas', subs: ['Pijama', 'Lingerie', 'Meia', 'Roupão'] },
 ];
+// ---------- categorias, tipos e campos criados pela usuária ----------
+// Ficam em S.settings.custom = { cats: [{id,name,subs}], subs: {catId: [...]}, fields: [{id,name,hint}] }
+// e são somados às listas fixas acima (assim entram no backup e em todas as telas).
+const BASE = { cats: CATEGORIES.map(c => ({ ...c, subs: [...c.subs] })), fields: null };
+export function applyCustom(custom = {}) {
+  BASE.fields ||= DETAIL_FIELDS.map(d => ({ ...d }));
+  CATEGORIES.length = 0;
+  for (const c of BASE.cats) CATEGORIES.push({ ...c, subs: [...c.subs, ...((custom.subs || {})[c.id] || []).filter(x => !c.subs.includes(x))] });
+  for (const c of custom.cats || []) {
+    CATEGORIES.push({ id: c.id, name: c.name, subs: [...(c.subs || [])], custom: true });
+    if (!CODE_PREFIX[c.id]) CODE_PREFIX[c.id] = c.prefix || 'PEC';
+    if (!CAT_ORDER.includes(c.id)) CAT_ORDER.splice(CAT_ORDER.indexOf('bolsas'), 0, c.id);
+  }
+  DETAIL_FIELDS.length = 0;
+  DETAIL_FIELDS.push(...BASE.fields, ...(custom.fields || []).map(f => ({ ...f, custom: true })));
+}
+// junta as categorias de outro aparelho (backup ou closet compartilhado) com as daqui, sem duplicar
+export function mergeCustom(mine = {}, other = {}) {
+  const m = { cats: [...(mine.cats || [])], subs: { ...(mine.subs || {}) }, fields: [...(mine.fields || [])] };
+  for (const c of other.cats || []) {
+    const cur = m.cats.find(x => x.id === c.id);
+    if (!cur) m.cats.push({ ...c, subs: [...(c.subs || [])] });
+    else cur.subs = [...new Set([...(cur.subs || []), ...(c.subs || [])])];
+  }
+  for (const [k, v] of Object.entries(other.subs || {})) m.subs[k] = [...new Set([...(m.subs[k] || []), ...v])];
+  for (const f of other.fields || []) if (!m.fields.some(x => x.id === f.id)) m.fields.push(f);
+  return m;
+}
+export const isCustomSub = (catId, sub) => !BASE.cats.find(c => c.id === catId)?.subs.includes(sub);
 export const catName = id => CATEGORIES.find(c => c.id === id)?.name || 'Sem categoria';
 // prefixo do código automático da peça (ex.: CIM-007)
 export const CODE_PREFIX = { cima: 'CIM', baixo: 'BAI', unicas: 'UNI', casacos: 'CAS', calcados: 'CAL', bolsas: 'BOL', acessorios: 'ACE', joias: 'JOI', praia: 'PRA', fitness: 'FIT', intimas: 'INT' };

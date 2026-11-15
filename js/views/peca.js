@@ -1,5 +1,5 @@
-import { nextCode, S, curProfile, item, save, savePhoto, deletePhotos, deleteItem, itemUsage, itemBand, daysUnused, costPerUse, profileItems, isActive, maybeSmall } from '../store.js';
-import { CATEGORIES, catName, STATUS, statusName, CLIMAS, OCASIOES, ESTILOS, PIRAMIDE, ESTAMPAS, PHOTO_LABELS, CARTELAS, cartelaName, LAST_USE_HINTS, band, DETAIL_FIELDS } from '../catalog.js';
+import { custom, saveCustom, nextCode, S, curProfile, item, save, savePhoto, deletePhotos, deleteItem, itemUsage, itemBand, daysUnused, costPerUse, profileItems, isActive, maybeSmall } from '../store.js';
+import { CATEGORIES, catName, STATUS, statusName, CLIMAS, OCASIOES, ESTILOS, PIRAMIDE, ESTAMPAS, PHOTO_LABELS, CARTELAS, cartelaName, LAST_USE_HINTS, band, DETAIL_FIELDS, isCustomSub, CODE_PREFIX } from '../catalog.js';
 import { NAMED, FAMILIES, nearestName, namedHex, cartelaOfColors, familyOfColors, scoreAgainst } from '../color.js';
 import { processImage, colorsFromBlob } from '../images.js';
 import { parseFicha } from '../ficha.js';
@@ -74,8 +74,8 @@ function draw(main) {
       </div>
       ${S.profiles.length > 1 ? `<div class="field"><label>De quem é</label><select data-f="profileId">${profilesOptions(D.profileId)}</select></div>` : ''}
       <div class="grid2">
-        <div class="field"><label>Categoria *</label><select data-f="category" data-redraw><option value="">Escolher…</option>${CATEGORIES.map(c => `<option value="${c.id}" ${c.id === D.category ? 'selected' : ''}>${c.name}</option>`).join('')}</select></div>
-        <div class="field"><label>Tipo</label><select data-f="sub"><option value="">—</option>${(cat?.subs || []).concat(D.sub && !(cat?.subs || []).includes(D.sub) ? [D.sub] : []).map(s => `<option ${s === D.sub ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select></div>
+        <div class="field"><label>Categoria *</label><select data-f="category" data-redraw><option value="">Escolher…</option>${CATEGORIES.map(c => `<option value="${c.id}" ${c.id === D.category ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}<option value="__nova">+ Nova categoria…</option></select></div>
+        <div class="field"><label>Tipo</label><select data-f="sub" data-redraw><option value="">—</option>${(cat?.subs || []).concat(D.sub && !(cat?.subs || []).includes(D.sub) ? [D.sub] : []).map(s => `<option ${s === D.sub ? 'selected' : ''}>${esc(s)}</option>`).join('')}${cat ? '<option value="__novo">+ Novo tipo…</option>' : ''}</select></div>
       </div>
       <div class="grid2">
         <div class="field"><label>Marca / loja</label><input data-f="brand" value="${esc(D.brand)}" list="brands" placeholder="Opcional"></div>
@@ -127,7 +127,8 @@ function draw(main) {
       <div class="field"><label>Descrição detalhada</label><textarea data-f="descricao" rows="5" placeholder="Como é a peça, de cima para baixo: modelagem, gola, mangas, botões, bolsos, tecido, caimento…">${esc(D.descricao)}</textarea></div>
       <details class="ficha tecnica" ${Object.values(D.detalhes || {}).some(Boolean) ? 'open' : ''}>
         <summary>${icon('tag')} Ficha técnica (detalhes da peça)</summary>
-        ${DETAIL_FIELDS.map(d => `<div class="field"><label>${d.name}</label><input data-d="${d.id}" value="${esc(D.detalhes?.[d.id] || '')}" placeholder="${esc(d.hint)}"></div>`).join('')}
+        ${DETAIL_FIELDS.map(d => `<div class="field"><label>${esc(d.name)}${d.custom ? ` <button class="link small" data-act="field-del" data-v="${d.id}">remover campo</button>` : ''}</label><input data-d="${d.id}" value="${esc(D.detalhes?.[d.id] || '')}" placeholder="${esc(d.hint || '')}"></div>`).join('')}
+        <div class="row-chips"><button class="chip" data-act="field-add">+ Novo campo na ficha</button><button class="chip" data-act="cats-manage">${icon('edit')} Minhas categorias</button></div>
         <div class="field"><label>Prompt de imagem (para recriar a peça numa IA)</label><textarea data-f="promptImg" rows="4" placeholder="Vem preenchido pela ficha da IA">${esc(D.promptImg)}</textarea></div>
       </details>
       <div class="field"><label>Observações</label><textarea data-f="notes" rows="3" placeholder="Cuidados de lavagem, ajustes, ideias…">${esc(D.notes)}</textarea></div>
@@ -148,6 +149,7 @@ function recalcColors() {
 function bindForm(main) {
   main.oninput = e => {
     const t = e.target;
+    if (t.dataset.f && t.value.startsWith('__')) return;
     if (t.dataset.f) { D[t.dataset.f] = t.value; if (t.dataset.redraw !== undefined && e.type === 'change') draw(main); }
     if (t.dataset.d) { D.detalhes ||= {}; D.detalhes[t.dataset.d] = t.value; }
     if (t.dataset.ci != null && e.type === 'change') {
@@ -159,6 +161,9 @@ function bindForm(main) {
   };
   main.onchange = e => {
     const t = e.target;
+    if (t.value === '__nova') return newCategory(main);
+    if (t.value === '__novo') return newSub(main);
+    if (t.dataset.f === 'sub') { D.sub = t.value; return; }
     if (t.dataset.f && t.dataset.redraw !== undefined) { D[t.dataset.f] = t.value; if (t.dataset.f === 'category') D.sub = ''; draw(main); }
     else if (t.dataset.ci != null) main.oninput(e);
   };
@@ -196,7 +201,84 @@ function bindForm(main) {
     if (act === 'tag-del') { D.tags.splice(+a.dataset.i, 1); return draw(main); }
     if (act === 'discard') { if (confirm('Limpar o formulário?')) { D = null; PH = []; nav.refresh(); } return; }
     if (act === 'save') return saveDraft();
+    if (act === 'field-add') return newField(main);
+    if (act === 'field-del') {
+      const f = custom().fields.find(x => x.id === v);
+      if (!f || !confirm(`Remover o campo “${f.name}” da ficha? O que já foi escrito nele some das peças só na tela (fica guardado se você criar o campo de novo com o mesmo nome).`)) return;
+      custom().fields = custom().fields.filter(x => x.id !== v); await saveCustom(); return draw(main);
+    }
+    if (act === 'cats-manage') return manageCustom(main);
   };
+}
+
+// ---------- categorias, tipos e campos novos ----------
+const slugId = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+async function newCategory(main) {
+  const name = (prompt('Nome da nova categoria (ex.: Lingerie, Uniformes, Roupas de festa):') || '').trim();
+  if (!name) return draw(main);
+  const ex = CATEGORIES.find(c => c.name.toLowerCase() === name.toLowerCase());
+  if (ex) { D.category = ex.id; D.sub = ''; toast('Essa categoria já existe — selecionei ela.'); return draw(main); }
+  const subs = (prompt(`Tipos de “${name}”, separados por vírgula (pode deixar em branco e criar depois):`) || '').split(',').map(x => x.trim()).filter(Boolean);
+  let id = 'c-' + (slugId(name) || 'cat'); while (CATEGORIES.some(c => c.id === id)) id += '2';
+  const L = (slugId(name).replace(/[^a-z]/g, '') || 'pec').toUpperCase();
+  const taken = new Set(Object.values(CODE_PREFIX));
+  let prefix = L.slice(0, 3).padEnd(3, 'X');
+  for (let i = 3; taken.has(prefix) && i < L.length; i++) prefix = L.slice(0, 2) + L[i];   // ex.: UNIFORMES → UNF (UNI já é de Peças únicas)
+  for (let n = 2; taken.has(prefix); n++) prefix = L.slice(0, 2) + n;
+  custom().cats.push({ id, name, subs, prefix });
+  await saveCustom();
+  D.category = id; D.sub = subs[0] || '';
+  toast('Categoria criada!');
+  draw(main);
+}
+async function newSub(main) {
+  const cat = CATEGORIES.find(c => c.id === D.category);
+  const name = (prompt(`Novo tipo em “${cat.name}”:`) || '').trim();
+  if (!name) return draw(main);
+  if (!cat.subs.some(s => s.toLowerCase() === name.toLowerCase())) {
+    const own = custom().cats.find(c => c.id === cat.id);
+    if (own) own.subs = [...(own.subs || []), name];
+    else (custom().subs[cat.id] ||= []).push(name);
+    await saveCustom();
+  }
+  D.sub = cat.subs.find(s => s.toLowerCase() === name.toLowerCase()) || name;
+  draw(main);
+}
+async function newField(main) {
+  const name = (prompt('Nome do novo campo da ficha técnica (ex.: Forro, Tipo de alça, Lavagem):') || '').trim();
+  if (!name) return;
+  if (DETAIL_FIELDS.some(d => d.name.toLowerCase() === name.toLowerCase())) return toast('Esse campo já existe.');
+  const hint = (prompt(`Dica do que escrever em “${name}” (opcional):`) || '').trim();
+  let id = 'x-' + (slugId(name) || 'campo'); while (DETAIL_FIELDS.some(d => d.id === id)) id += '2';
+  custom().fields.push({ id, name, hint });
+  await saveCustom();
+  toast('Campo criado — aparece em todas as peças.');
+  draw(main);
+}
+function manageCustom(main) {
+  const cu = custom();
+  const html = () => {
+    const subs = Object.entries(cu.subs || {}).flatMap(([cid, list]) => list.map(s => ({ cid, s })));
+    const row = (label, sub, act, v, v2 = '') => `<div class="irow"><div class="irow-main"><div class="nm">${esc(label)}</div><div class="sub">${esc(sub)}</div></div><button class="icon-btn" data-act="${act}" data-v="${esc(v)}" data-v2="${esc(v2)}" aria-label="Remover">${icon('trash')}</button></div>`;
+    return `<p class="hint">Aqui ficam só as que você criou. As categorias que já vinham no app não podem ser apagadas.</p>
+      <h3 class="sec">Categorias</h3>${cu.cats.length ? cu.cats.map(c => row(c.name, (c.subs || []).join(', ') || 'sem tipos', 'm-cat', c.id)).join('') : '<p class="muted small">Nenhuma ainda.</p>'}
+      <h3 class="sec">Tipos novos em categorias do app</h3>${subs.length ? subs.map(x => row(x.s, catName(x.cid), 'm-sub', x.cid, x.s)).join('') : '<p class="muted small">Nenhum ainda.</p>'}
+      <h3 class="sec">Campos da ficha técnica</h3>${cu.fields.length ? cu.fields.map(f => row(f.name, f.hint || '', 'm-field', f.id)).join('') : '<p class="muted small">Nenhum ainda.</p>'}`;
+  };
+  const body = openSheet(html(), {
+    title: 'Minhas categorias',
+    onAct: async (act, el) => {
+      const v = el?.dataset.v, v2 = el?.dataset.v2;
+      if (act === 'm-cat') {
+        const n = S.items.filter(i => i.category === v).length;
+        if (n) return toast(`Tem ${n} peça${n > 1 ? 's' : ''} nessa categoria. Mude a categoria dela${n > 1 ? 's' : ''} antes de apagar.`);
+        cu.cats = cu.cats.filter(c => c.id !== v);
+      } else if (act === 'm-sub') cu.subs[v] = (cu.subs[v] || []).filter(s => s !== v2);
+      else if (act === 'm-field') cu.fields = cu.fields.filter(f => f.id !== v);
+      else return;
+      await saveCustom(); body.innerHTML = html(); draw(main);
+    },
+  });
 }
 
 function addTag(main) {

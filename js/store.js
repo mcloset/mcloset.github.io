@@ -1,6 +1,6 @@
 // Estado do app em memória + gravação no banco local.
 import * as db from './db.js';
-import { GONE, CODE_PREFIX } from './catalog.js';
+import { GONE, CODE_PREFIX, applyCustom } from './catalog.js';
 import { todayStr, daysBetween, climaDoMes, uid } from './util.js';
 
 export const LIST_STORES = ['profiles', 'items', 'looks', 'events', 'trips', 'wishes'];
@@ -11,6 +11,7 @@ const DEFAULT_SETTINGS = { id: 'settings', backupDays: 7, lastBackup: null, curr
 export async function load() {
   for (const s of LIST_STORES) S[s] = await db.getAll(s);
   S.settings = { ...DEFAULT_SETTINGS, ...(await db.get('meta', 'settings') || {}) };
+  applyCustom(S.settings.custom);
   if (!S.profiles.length) {
     const p = { id: uid(), name: 'Eu', kind: 'adulto', color: '#7A2340', createdAt: todayStr() };
     await save('profiles', p);
@@ -49,6 +50,9 @@ export async function remove(store, id) {
   invalidate();
 }
 export async function saveSettings() { await db.put('meta', S.settings); }
+// categorias / tipos / campos da ficha criados pela usuária
+export const custom = () => (S.settings.custom ||= { cats: [], subs: {}, fields: [] });
+export async function saveCustom() { applyCustom(S.settings.custom); await saveSettings(); }
 
 export const curProfile = () => S.profiles.find(p => p.id === S.settings.currentProfile) || S.profiles[0];
 export const profile = id => S.profiles.find(p => p.id === id);

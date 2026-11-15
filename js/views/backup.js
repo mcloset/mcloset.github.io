@@ -1,4 +1,5 @@
 import * as db from '../db.js';
+import { mergeCustom } from '../catalog.js';
 import { S, LIST_STORES, load, saveSettings, clearPhotoCache, itemUsage, itemBand, profile, costPerUse } from '../store.js';
 import { catName, statusName, band, CLIMAS } from '../catalog.js';
 import { makeZip, readZip } from '../zip.js';
@@ -171,7 +172,7 @@ export async function importBackup(picked) {
   try {
     if (mode === 'replace') await db.clearAll();
     for (const s of LIST_STORES) await db.putMany(s, data[s] || []);
-    const settings = mode === 'replace' ? { ...data.settings, id: 'settings' } : { ...S.settings };
+    const settings = mode === 'replace' ? { ...data.settings, id: 'settings' } : { ...S.settings, custom: mergeCustom(S.settings.custom, data.settings?.custom) };
     settings.lastBackup = settings.lastBackup || data.exportedAt;
     await db.put('meta', settings);
     const photoNames = zip.names.filter(nm => /^photos\/[^/]+\.jpg$/.test(nm) && !nm.endsWith('.thumb.jpg'));

@@ -1,7 +1,8 @@
 // Compartilhar closet ou look com outra pessoa que também usa o MCLOSET.
 // O arquivo .zip leva só as peças, looks e fotos escolhidos — nada do resto do seu app.
 import * as db from './db.js';
-import { S, save, profile, item, look, lookItems, deleteItem, deleteLook, clearPhotoCache, invalidate } from './store.js';
+import { mergeCustom } from './catalog.js';
+import { saveCustom, S, save, profile, item, look, lookItems, deleteItem, deleteLook, clearPhotoCache, invalidate } from './store.js';
 import { makeZip } from './zip.js';
 import { uid, deliverFile, todayStr } from './util.js';
 
@@ -13,7 +14,8 @@ async function pack(scope, profs, items, looks, title) {
     app: 'meu-closet', kind: 'share', scope, exportedAt: new Date().toISOString(),
     profiles: profs.map(p => ({ id: p.sharedFrom || p.id, name: p.name, color: p.color, kind: p.kind, cartela: p.cartela || '', sizes: p.sizes || '' })),
     items: items.map(it => ({ ...clean(it), profileId: profile(it.profileId)?.sharedFrom || it.profileId })),
-    looks: looks.map(l => ({ id: l.id, name: l.name, group: l.group || '', ocasiao: l.ocasiao || '', itemIds: l.itemIds, paleta: l.paleta || '', base: l.base || '', createdAt: l.createdAt })),
+    looks: looks.map(l => ({ id: l.id, name: l.name, group: l.group || '', ocasiao: l.ocasiao || '', itemIds: l.itemIds, paleta: l.paleta || '', base: l.base || '', layout: l.layout || null, createdAt: l.createdAt })),
+    custom: S.settings.custom || null,
   };
   const entries = [{ name: 'share.json', data: JSON.stringify(data) }];
   const photoIds = new Set(items.flatMap(i => i.photos || []));
@@ -45,6 +47,7 @@ export async function shareLook(lookId) {
 // Recebe o arquivo: cada pessoa vira um closet "compartilhado" no seu app.
 // Receber de novo o closet da mesma pessoa atualiza (não duplica).
 export async function importShare(zip, data) {
+  if (data.custom) { S.settings.custom = mergeCustom(S.settings.custom, data.custom); await saveCustom(); }
   const pmap = new Map();   // id de origem -> perfil local
   for (const sp of data.profiles || []) {
     let local = S.profiles.find(p => p.sharedFrom === sp.id);
@@ -89,7 +92,8 @@ export async function importShare(zip, data) {
     const itemIds = (l.itemIds || []).map(id => byOrigin.get(id)).filter(Boolean);
     if (!itemIds.length) continue;
     const id = 'sl-' + l.id;
-    await save('looks', { ...l, id, itemIds, shared: true, sharedBy: [...pmap.values()].map(p => p.name).join(' e ') });
+    const layout = l.layout ? Object.fromEntries(Object.entries(l.layout).map(([k, v]) => [byOrigin.get(k), v]).filter(([k]) => k)) : null;
+    await save('looks', { ...l, id, itemIds, layout, shared: true, sharedBy: [...pmap.values()].map(p => p.name).join(' e ') });
     nLooks++;
   }
   clearPhotoCache();

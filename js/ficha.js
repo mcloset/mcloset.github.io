@@ -12,7 +12,8 @@ const KEYS = [
   [/^piramide/, 'piramide'], [/^tamanho$/, 'size'], [/^descri/, 'descricao'], [/^prompt/, 'promptImg'], [/^observ/, 'notes'],
 ];
 const letters = s => norm(s).replace(/[^a-z]/g, '');
-const DETAIL_KEYS = DETAIL_FIELDS.map(d => [letters(d.name), d.id]);
+// calculado na hora (os campos criados pela usuária entram na lista depois que o app abre)
+const detailKeys = () => DETAIL_FIELDS.map(d => [letters(d.name), d.id]);
 
 export function looksLikeFicha(text) {
   return /(categoria|cores?|tipo)\s*[:：]/i.test(text || '');
@@ -22,6 +23,7 @@ function keyOf(label) {
   const k = norm(label), l = letters(label);
   // campos que o próprio app escreve ao exportar e que não voltam para a peça
   if (/^(pessoa|uso|situacao|preco pago|custo por uso)$/.test(k)) return 'ignore';
+  const DETAIL_KEYS = detailKeys();
   const exact = DETAIL_KEYS.find(([n]) => n === l);
   if (exact) return 'd:' + exact[1];
   const hit = KEYS.find(([re]) => re.test(k));

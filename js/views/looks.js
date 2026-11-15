@@ -9,6 +9,8 @@ import { $, esc, uid, brl, todayStr, fmtDate, toast, norm, pickFiles, climaDoMes
 import { processImage } from '../images.js';
 import { shareLook as shareLookFile } from '../share.js';
 import { scheduleSheet } from './planejar.js';
+import { boardHTML, bindBoard, autoLayout, boardImage, hydrateBoard } from '../board.js';
+import { lookAI } from '../tryon.js';
 
 // ================= LISTA =================
 const L = { q: '', group: 'tudo', mine: true };
@@ -33,7 +35,7 @@ export function renderList(main) {
     ${chips([{ id: 'tudo', name: 'Tudo' }, { id: 'dupla', name: 'Em grupo' }, ...groups.map(g => ({ id: g, name: g }))], L.group, 'group')}
     <div id="list">${list.length ? `<div class="lgrid">${list.map(lookCard).join('')}</div>` : emptyState(looks.length ? 'Nenhum look encontrado.' : 'Você ainda não montou nenhum look.<br>Toque no + para combinar suas peças.', 'book')}</div>
     <button class="fab" data-act="fab" aria-label="Novo look">${icon('plus')}</button>`;
-  hydrate(main);
+  hydrate(main); hydrateBoard(main);
   main.oninput = e => { if (e.target.id === 'q') { L.q = e.target.value; const pos = e.target.selectionStart; nav.refresh(); const i = $('#q'); i.focus(); i.setSelectionRange(pos, pos); } };
   main.onchange = null;
   main.onclick = async e => {
@@ -55,7 +57,7 @@ function lookCard(l) {
   const its = lookItems(l);
   const profs = lookProfiles(l);
   return `<div class="lcard" data-act="open-look" data-id="${l.id}">
-    ${collage(its)}
+    ${l.layout ? boardHTML(its, l.layout, { cls: 'sm' }) : collage(its)}
     <div class="lc-name">${esc(l.name)}</div>
     <div class="lc-sub">${l.group ? esc(l.group) + ' · ' : ''}${its.length} peça${its.length === 1 ? '' : 's'} ${profs.length > 1 ? profs.map(p => avatar(p, 'xs')).join('') : ''}</div>
   </div>`;
@@ -77,7 +79,7 @@ export function renderDetail(main, params) {
       <button class="icon-btn" data-act="edit" aria-label="Editar">${icon('edit')}</button>
       <button class="icon-btn" data-act="del" aria-label="Excluir">${icon('trash')}</button>` })}
     <div class="pad">
-      ${collage(its, 'big')}
+      ${l.layout ? boardHTML(its, l.layout, { cls: 'big' }) : collage(its, 'big')}
       <h2 class="serif big">${esc(l.name)}</h2>
       <div class="muted">${[l.group, l.ocasiao].filter(Boolean).map(esc).join(' · ')}</div>
       ${l.shared ? `<div class="pill">${icon('users')} Look compartilhado por ${esc(l.sharedBy || '')}</div>` : ''}
@@ -87,6 +89,7 @@ export function renderDetail(main, params) {
         <button class="btn" data-act="use">${icon('camera')} Registrar uso</button>
         <button class="btn ghost" data-act="schedule">${icon('calendar')} Programar</button>
       </div>
+      <button class="btn block ghost" data-act="ai">${icon('wand')} Ver vestida com IA</button>
 
       <div class="consult">
         <div class="ct">${icon('wand')} <b>Parecer de estilo</b>${an.score != null ? `<span class="score-big">${an.score}%</span>` : ''}</div>
@@ -108,7 +111,7 @@ export function renderDetail(main, params) {
           <div><b>${fmtDate(e.date)}</b><div class="muted small">${e.status === 'registrado' ? 'Usado' : 'Programado'}${e.note ? ' · ' + esc(e.note) : ''}</div></div>
         </div>`).join('')}</div>` : `<div class="empty-mini">${icon('camera')}<p>Nenhum uso registrado ainda. Registre quando usar e adicione uma foto para criar seu diário de looks.</p></div>`}
     </div>`;
-  hydrate(main);
+  hydrate(main); hydrateBoard(main);
   main.oninput = main.onchange = null;
   main.onclick = async e => {
     const a = e.target.closest('[data-act]'); if (!a) return;
@@ -117,6 +120,7 @@ export function renderDetail(main, params) {
     else if (act === 'edit') nav.go('#/editar-look/' + l.id);
     else if (act === 'del') { if (confirm(`Excluir o look “${l.name}”? As peças continuam no closet.`)) { await deleteLook(l.id); toast('Look excluído.'); nav.go('#/looks', true); } }
     else if (act === 'use') registerUseSheet(l);
+    else if (act === 'ai') lookAI(its, l.layout, l.name);
     else if (act === 'schedule') scheduleSheet({ lookId: l.id, title: 'Programar “' + l.name + '”' });
     else if (act === 'share') {
       const how = await choose('Compartilhar look', [
@@ -160,6 +164,7 @@ export function registerUseSheet(l, date = todayStr()) {
 }
 
 async function shareLook(l) {
+  if (l.layout) return deliverFile(await boardImage(lookItems(l), l.layout, { title: l.name }), l.name.replace(/[^\w\- ]+/g, '').trim() + '.jpg');
   const its = sortByCat(lookItems(l));
   const W = 1080, pad = 60, top = 150;
   const n = its.length, cols = n <= 1 ? 1 : n <= 4 ? 2 : 3, rows = Math.ceil(n / cols);
@@ -191,13 +196,13 @@ export function renderComposer(main, params) {
     if (params.id) {
       const l = look(params.id); if (!l) return nav.go('#/looks');
       const profs = [...new Set(lookItems(l).map(i => i.profileId))];
-      C = { key, id: l.id, name: l.name, group: l.group || '', ocasiao: l.ocasiao || '', notes: l.notes || '', itemIds: [...(l.itemIds || [])], profiles: profs.length ? profs : [curProfile().id], palette: l.paleta || '', base: l.base || '' };
+      C = { key, id: l.id, name: l.name, group: l.group || '', ocasiao: l.ocasiao || '', notes: l.notes || '', itemIds: [...(l.itemIds || [])], layout: structuredClone(l.layout || {}), profiles: profs.length ? profs : [curProfile().id], palette: l.paleta || '', base: l.base || '' };
     } else {
       const profs = params.perfis ? params.perfis.split(',').filter(profile) : [curProfile().id];
       const ids = params.items ? params.items.split(',') : params.with ? [params.with] : [];
       C = { key, name: params.name || '', group: params.group || '', ocasiao: params.ocasiao || '', notes: '', itemIds: ids.filter(item), profiles: profs, trip: params.trip, day: params.day, palette: params.paleta || '', base: params.base ? '#' + params.base.replace('#', '') : '' };
     }
-    Object.assign(C, { tab: C.profiles[0], cat: 'tudo', sortMatch: true, q: '', onlyPal: !!C.palette });
+    Object.assign(C, { tab: C.profiles[0], cat: 'tudo', sortMatch: true, q: '', onlyPal: !!C.palette, layout: C.layout || {}, bsel: null });
   }
   drawComposer(main);
 }
@@ -235,6 +240,17 @@ function drawComposer(main) {
         <button class="chip ${C.sortMatch ? 'on' : ''}" data-act="sortm">${icon('wand')} Combina</button></div>
       ${chips([{ id: 'tudo', name: 'Tudo' }, ...CATEGORIES.filter(c => tabItems.some(i => i.category === c.id))], C.cat, 'ccat')}
       <div class="igrid">${scored.map(({ i, s }) => itemCard(i, { score: s, selected: C.itemIds.includes(i.id), act: 'toggle' })).join('') || emptyState('Nenhuma peça aqui.')}</div>
+      <div class="comp-board">
+        ${sel.length ? `<h3 class="sec">${icon('hanger')} Arrume o look</h3>${boardHTML(sel, C.layout, { edit: true, sel: C.bsel })}
+          <div class="bd-tools">${C.bsel && sel.some(i => i.id === C.bsel) ? `
+            <button class="chip" data-act="b-front">${icon('chevronUp')} Frente</button>
+            <button class="chip" data-act="b-back">${icon('chevronDown')} Trás</button>
+            <button class="chip" data-act="b-small">− Menor</button>
+            <button class="chip" data-act="b-big">+ Maior</button>
+            <button class="chip" data-act="unsel" data-id="${C.bsel}">${icon('x')} Tirar</button>` : `
+            <span class="muted small">Arraste as peças. Toque numa para aumentar, diminuir ou trazer para frente.</span>
+            <button class="chip" data-act="b-reset">${icon('refresh')} Arrumar sozinho</button>`}</div>` : ''}
+      </div>
       <div class="comp-form">
         <div class="field"><label>Nome do look</label><input id="ln" value="${esc(C.name)}" placeholder="Ex.: Dia 2 - noite"></div>
         <div class="grid2">
@@ -243,10 +259,16 @@ function drawComposer(main) {
         </div>
         <datalist id="lgroups">${[...new Set(S.looks.map(l => l.group).filter(Boolean))].map(g => `<option value="${esc(g)}">`).join('')}</datalist>
         <button class="btn block" data-act="save">${C.id ? 'Salvar look' : 'Criar look'} (${sel.length} peça${sel.length === 1 ? '' : 's'})</button>
+        ${sel.length ? `<button class="btn block ghost" data-act="ai">${icon('wand')} Ver vestida com IA</button>` : ''}
         <button class="btn block ghost" data-act="add-person">${icon('users')} ${multi ? 'Adicionar mais uma pessoa' : 'Adicionar outra pessoa neste look'}</button>
       </div>
     </div>`;
-  hydrate(main);
+  hydrate(main); hydrateBoard(main);
+  C.layout = autoLayout(sel, C.layout);
+  bindBoard(main, () => C.layout, {
+    onChange: (lay, id) => { C.layout = lay; C.bsel = id; drawKeep(main); },
+    onSelect: id => { if (C.bsel !== id) { C.bsel = id; drawKeep(main); } },
+  });
   main.onchange = e => { if (e.target.id === 'onlypal') { C.onlyPal = e.target.checked; drawKeep(main); } };
   main.oninput = e => {
     const t = e.target;
@@ -258,8 +280,19 @@ function drawComposer(main) {
   main.onclick = async e => {
     const a = e.target.closest('[data-act]'); if (!a) return;
     const act = a.dataset.act;
-    if (act === 'toggle') { const id = a.dataset.id; C.itemIds = C.itemIds.includes(id) ? C.itemIds.filter(x => x !== id) : [...C.itemIds, id]; drawKeep(main); }
-    else if (act === 'unsel') { C.itemIds = C.itemIds.filter(x => x !== a.dataset.id); drawKeep(main); }
+    if (act === 'toggle') { const id = a.dataset.id; if (C.itemIds.includes(id)) { C.itemIds = C.itemIds.filter(x => x !== id); delete C.layout[id]; if (C.bsel === id) C.bsel = null; } else C.itemIds = [...C.itemIds, id]; drawKeep(main); }
+    else if (act === 'unsel') { C.itemIds = C.itemIds.filter(x => x !== a.dataset.id); delete C.layout[a.dataset.id]; C.bsel = null; drawKeep(main); }
+    else if (act.startsWith('b-')) {
+      const p = C.layout[C.bsel], zs = Object.values(C.layout).map(q => q.z || 0);
+      if (act === 'b-reset') { C.layout = {}; C.bsel = null; }
+      else if (!p) return;
+      else if (act === 'b-front') p.z = Math.max(...zs) + 1;
+      else if (act === 'b-back') { Object.values(C.layout).forEach(q => q.z = (q.z || 0) + 1); p.z = Math.min(...zs); }
+      else if (act === 'b-small') p.w = Math.max(8, p.w - 6);
+      else if (act === 'b-big') p.w = Math.min(100, p.w + 6);
+      drawKeep(main);
+    }
+    else if (act === 'ai') lookAI(sel_(), C.layout, C.name);
     else if (act === 'tab') { C.tab = a.dataset.v; C.cat = 'tudo'; drawComposer(main); }
     else if (act === 'ccat') { C.cat = a.dataset.v; drawKeep(main); }
     else if (act === 'sortm') { C.sortMatch = !C.sortMatch; drawKeep(main); }
@@ -275,6 +308,7 @@ function drawComposer(main) {
   };
 }
 function drawKeep(main) { const y = scrollY; drawComposer(main); scrollTo(0, y); }
+const sel_ = () => C.itemIds.map(item).filter(Boolean);
 
 function harmLine(sel) {
   const an = analyzeLook(sel);
@@ -288,7 +322,8 @@ async function saveLook() {
   let name = C.name.trim();
   if (!name) name = C.ocasiao || ('Look ' + (S.looks.length + 1));
   const l = C.id ? look(C.id) : { id: uid(), createdAt: new Date().toISOString() };
-  Object.assign(l, { name, group: C.group.trim(), ocasiao: C.ocasiao, itemIds: C.itemIds, climas: [...new Set(sel.flatMap(i => i.climas || []))], paleta: C.palette || '', base: C.base || '' });
+  const lay = autoLayout(sel, C.layout);
+  Object.assign(l, { layout: Object.fromEntries(C.itemIds.filter(id => lay[id]).map(id => [id, lay[id]])), name, group: C.group.trim(), ocasiao: C.ocasiao, itemIds: C.itemIds, climas: [...new Set(sel.flatMap(i => i.climas || []))], paleta: C.palette || '', base: C.base || '' });
   await save('looks', l);
   if (C.trip) {
     const t = S.trips.find(t => t.id === C.trip);
@@ -325,7 +360,7 @@ export function renderJuntas(main) {
       <button class="btn block ghost" data-act="manual">Montar do meu jeito</button>
       ${pal?.id ? '' : '<p class="hint">Sem paleta, o app só cuida para as cores de todos combinarem.</p>'}
     </div>`;
-  hydrate(main);
+  hydrate(main); hydrateBoard(main);
   main.oninput = null;
   main.onchange = e => { if (e.target.id === 'goc') G.ocasiao = e.target.value; };
   main.onclick = e => {
@@ -395,7 +430,7 @@ export function renderHoje(main, params = {}) {
         <button class="btn" data-act="wear">${icon('check')} Vou usar hoje</button>
       </div>
     </div>`;
-  hydrate(main);
+  hydrate(main); hydrateBoard(main);
   main.oninput = null;
   main.onchange = e => { if (e.target.id === 'hoc') { H.ocasiao = e.target.value; H.items = {}; nav.refresh(); } };
   main.onclick = async e => {
