@@ -1,10 +1,10 @@
 // Guarda o app no aparelho para funcionar sem internet.
 // Ao publicar uma nova versão, aumente o número abaixo.
-const VERSION = 'meu-closet-v10';
+const VERSION = 'meu-closet-v11';
 const FILES = [
   './', './index.html', './manifest.webmanifest', './css/app.css',
   './js/app.js', './js/db.js', './js/store.js', './js/ui.js', './js/util.js', './js/catalog.js',
-  './js/color.js', './js/images.js', './js/zip.js', './js/ficha.js', './js/suggest.js', './js/share.js', './js/describe.js', './js/config.js', './js/remote.js', './js/weather.js', './js/fun.js',
+  './js/color.js', './js/images.js', './js/zip.js', './js/ficha.js', './js/suggest.js', './js/share.js', './js/describe.js', './js/config.js', './js/remote.js', './js/weather.js', './js/fun.js', './js/board.js', './js/tryon.js',
   './js/views/armario.js', './js/views/peca.js', './js/views/looks.js', './js/views/planejar.js',
   './js/views/hub.js', './js/views/backup.js', './js/views/lote.js', './js/views/conferir.js', './js/views/painel.js',
   './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png',
